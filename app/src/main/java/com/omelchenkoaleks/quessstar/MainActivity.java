@@ -5,9 +5,12 @@ import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.service.autofill.FieldClassification;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -34,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<String> mUrls;
     private ArrayList<String> mNames;
+    private ArrayList<Button> mButtons;
+
+    private int mNumberOfQuestion;
+    private int mNumberOfRightAnswer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
         mButton_1 = findViewById(R.id.button_1);
         mButton_2 = findViewById(R.id.button_2);
         mButton_3 = findViewById(R.id.button_3);
+        mButtons = new ArrayList<>();
+        mButtons.add(mButton_0);
+        mButtons.add(mButton_1);
+        mButtons.add(mButton_2);
+        mButtons.add(mButton_3);
 
         mSrarImageView = findViewById(R.id.star_image_view);
 
@@ -51,6 +63,56 @@ public class MainActivity extends AppCompatActivity {
         mNames = new ArrayList<>();
 
         getContent();
+
+        playGame();
+    }
+
+    public void onClickAnswer(View view) {
+        Button button = (Button) view;
+        String tag = button.getTag().toString();
+        if (Integer.parseInt(tag) == mNumberOfRightAnswer) {
+            Toast.makeText(this, "Верно", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this,
+                    "Неверно! Правильный ответ: " + mNames.get(mNumberOfQuestion),
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        playGame();
+    }
+
+    private void playGame() {
+        generateQuestion();
+        DownloadImageTask task = new DownloadImageTask();
+        try {
+            Bitmap bitmap = task.execute(mUrls.get(mNumberOfQuestion)).get();
+            if (bitmap != null) {
+                mSrarImageView.setImageBitmap(bitmap);
+                // нужен цикл, чтобы кнопкам указать текст:
+                for (int i = 0; i < mButtons.size(); i++) {
+                    if (i == mNumberOfRightAnswer) {
+                        mButtons.get(i).setText(mNames.get(mNumberOfQuestion));
+                    } else {
+                        int wrongAnswer = generateWrongAnswer();
+                        mButtons.get(i).setText(mNames.get(wrongAnswer));
+                    }
+                }
+            }
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void generateQuestion() {
+        mNumberOfQuestion = (int) (Math.random() * mNames.size());
+        // указываем на какой кнопке будет неправильный ответ:
+        mNumberOfRightAnswer = (int) (Math.random() * mButtons.size());
+    }
+
+    private int generateWrongAnswer() {
+        return (int) (Math.random() * mNames.size());
     }
 
     private void getContent() {
@@ -83,10 +145,6 @@ public class MainActivity extends AppCompatActivity {
 
             while (matcherName.find()) {
                 mNames.add(matcherName.group(1));
-            }
-
-            for (String s : mUrls) {
-                Log.i("urlContent", s);
             }
 
         } catch (ExecutionException e) {
