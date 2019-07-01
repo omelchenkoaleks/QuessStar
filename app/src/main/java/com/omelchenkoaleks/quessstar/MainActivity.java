@@ -17,6 +17,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     private String mUrlConnection = "http://www.posh24.se/kandisar";
@@ -47,7 +49,18 @@ public class MainActivity extends AppCompatActivity {
         DownloadContentTask contentTask = new DownloadContentTask();
         try {
             String content = contentTask.execute(mUrlConnection).get();
-            Log.i("urlContent", content);
+
+            /* ---------- SPLIT CONTENT ---------- */
+
+            String start = "<p class=\"link\">Topp 100 kändisar</p>";
+            String finish = "<div class=\"col-xs-12 col-sm-6 col-md-4\">";
+            Pattern pattern = Pattern.compile(start + "(.*?)" + finish);
+            Matcher matcher = pattern.matcher(content);
+            String splitContent = "";
+            while (matcher.find()) {
+                splitContent = matcher.group(1);
+            }
+            Log.i("urlContent", splitContent);
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
