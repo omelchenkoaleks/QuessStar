@@ -2,6 +2,7 @@ package com.omelchenkoaleks.quessstar;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +17,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,6 +32,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView mSrarImageView;
 
+    private ArrayList<String> mUrls;
+    private ArrayList<String> mNames;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
         mButton_3 = findViewById(R.id.button_3);
 
         mSrarImageView = findViewById(R.id.star_image_view);
+
+        mUrls = new ArrayList<>();
+        mNames = new ArrayList<>();
 
         getContent();
     }
@@ -60,7 +68,27 @@ public class MainActivity extends AppCompatActivity {
             while (matcher.find()) {
                 splitContent = matcher.group(1);
             }
-            Log.i("urlContent", splitContent);
+
+            /* ТЕПЕРЬ НУЖНО ПОЛУЧИТЬ ДВА МАССИВА:
+                   1, БУДЕТ ХРАНИТЬ ИМЕНА
+                         2, БУДЕТ ХРАНИТЬ КАРТИНКИ */
+            Pattern patternImage = Pattern.compile("<img src=\"(.*?)\"");
+            Pattern patternName = Pattern.compile("alt=\"(.*?)\"/>");
+            Matcher matcherImage = patternImage.matcher(splitContent);
+            Matcher matcherName = patternName.matcher(splitContent);
+
+            while (matcherImage.find()) {
+                mUrls.add(matcherImage.group(1));
+            }
+
+            while (matcherName.find()) {
+                mNames.add(matcherName.group(1));
+            }
+
+            for (String s : mUrls) {
+                Log.i("urlContent", s);
+            }
+
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
